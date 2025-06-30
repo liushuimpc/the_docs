@@ -1,0 +1,53 @@
+
+
+### 工具介绍 ###
+
+jarsigner是JDK提供的针对jar包签名的通用工具,
+位于JDK/bin/jarsigner.exe
+
+apksigner是Google官方提供的针对Android apk签名及验证的专用工具,
+位于Android SDK/build-tools/SDK版本/apksigner.bat
+
+不管是apk包,还是jar包,本质都是zip格式的压缩包,所以它们的签名过程都差不多(仅限V1签名),
+以上两个工具都可以对Android apk包进行签名.
+------------------------------------------ 
+
+
+### V1和V2签名的区别 ###
+
+在Android Studio中点击菜单 Build->Generate signed apk... 打包签名过程中,
+可以看到两种签名选项 V1(Jar Signature)  V2(Full APK Signature),
+刚开始升级AS看到这个懵了,既然是APK Signature,就放心偷懒选了V2,结果安装失败？？？无奈,只能查资料...
+
+从Android 7.0开始, 谷歌增加新签名方案 V2 Scheme (APK Signature);
+但Android 7.0以下版本, 只能用旧签名方案 V1 scheme (JAR signing)
+
+V1签名:
+    来自JDK(jarsigner), 对zip压缩包的每个文件进行验证, 签名后还能对压缩包修改(移动/重新压缩文件)
+    对V1签名的apk/jar解压,在META-INF存放签名文件(MANIFEST.MF, CERT.SF, CERT.RSA), 
+    其中MANIFEST.MF文件保存所有文件的SHA1指纹(除了META-INF文件), 由此可知: V1签名是对压缩包中单个文件签名验证
+
+V2签名:
+    来自Google(apksigner), 对zip压缩包的整个文件验证, 签名后不能修改压缩包(包括zipalign),
+    对V2签名的apk解压,没有发现签名文件,重新压缩后V2签名就失效, 由此可知: V2签名是对整个APK签名验证
+
+    V2签名优点很明显:
+        签名更安全(不能修改压缩包)
+        签名验证时间更短(不需要解压验证),因而安装速度加快
+
+注意: apksigner工具默认同时使用V1和V2签名,以兼容Android 7.0以下版本
+------------------------------------------ 
+
+
+
+### zipalign和V2签名 ###
+
+位于Android SDK/build-tools/SDK版本/zipalign.exe
+zipalign 是对zip包对齐的工具,使APK包内未压缩的数据有序排列对齐,从而减少APP运行时内存消耗
+zipalign -v 4 in.apk out.apk   //4字节对齐优化
+zipalign -c -v 4 in.apk        //检查APK是否对齐
+
+zipalign可以在V1签名后执行
+但zipalign不能在V2签名后执行,只能在V2签名之前执行！！
+------------------------------------------ 
+
